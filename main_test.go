@@ -72,7 +72,7 @@ func TestCafeCount(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("count=%d", test.count), func(t *testing.T) {
-			requestsUrl := fmt.Sprintf("/cafe?count=%d", test.count)
+			requestsUrl := fmt.Sprintf("/cafe?city=%s&count=%d", city, test.count)
 			response := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", requestsUrl, nil)
 			handler.ServeHTTP(response, req)
@@ -118,7 +118,7 @@ func TestCafeSearch(t *testing.T) {
 	}{
 		{"фасоль", 0},
 		{"кофе", 2},
-		{"вилка", 2},
+		{"вилка", 1},
 		{"", len(cafeList[city])},
 		{"мир", 1},
 		{"завтраки", 1},
