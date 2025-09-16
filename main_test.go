@@ -107,3 +107,46 @@ func TestCafeCount(t *testing.T) {
 		assert.Len(t, actualCafes, expectedCount, "for request %s without count: Expected %d cafes, received %d. Response body: '%s'", requestsUrl, expectedCount, len(actualCafes), responseBody)
 	})
 }
+
+func TestCafeSearch(t *testing.T) {
+	handler := http.HandlerFunc(mainHandle)
+	city := "moscow"
+
+	tests := []struct {
+		search    string
+		wantCount int
+	}{
+		{"фасоль", 0},
+		{"кофе", 2},
+		{"вилка", 2},
+		{"", len(cafeList[city])},
+		{"мир", 1},
+		{"завтраки", 1},
+		{"студент", 1},
+		{"сладкоежка", 1},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("search=%s", test.search), func(t *testing.T) {
+			requestsUrl := fmt.Sprintf("/cafe?city=%s&search=%s", city, test.search)
+			response := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", requestsUrl, nil)
+			handler.ServeHTTP(response, req)
+
+			require.Equal(t, http.StatusOK, response.Code, "request %s must be successful. Status:%d", requestsUrl, response.Code)
+			responseBody := strings.TrimSpace(response.Body.String())
+			var actualCafes []string
+			if responseBody != "" {
+				actualCafes = strings.Split(responseBody, ",")
+			} else {
+				actualCafes = []string{}
+			}
+			assert.Len(t, actualCafes, test.wantCount, "For request %s: Expected %d cafes, received %d. Response body: '%s'", requestsUrl, test.wantCount, len(actualCafes), responseBody)
+
+			searchLower := strings.ToLower(test.search)
+			for _, cafeName := range actualCafes {
+				assert.Contains(t, strings.ToLower(cafeName), searchLower, "The name of the cafe '%s' must contain the substring '%s'", cafeName, test.search)
+			}
+		})
+	}
+}
